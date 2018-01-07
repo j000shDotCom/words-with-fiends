@@ -5,6 +5,7 @@ from requests import Session
 from requests.auth import AuthBase
 
 
+# TODO do something with this
 class WWFAuth(AuthBase):
     def __init__(self, login, password):
         self.login = login
@@ -16,10 +17,9 @@ class WWFAuth(AuthBase):
         return r
 
 
-def main():
+def login():
     s = Session()
-    url = 'https://wordswithfriends.zyngawithfriends.com'
-    # credential variables redacted
+
     querystring = {
         'bundle_name': 'WordsWithFriends3',
         'device_model': 'iPhone',
@@ -28,22 +28,76 @@ def main():
         'client_version': '10.26'
     }
     data = {
-        'login_request': {
-            'login': username,
-            'password': password
-        }
+        'login_request': {'login': login, 'password': password}
     }
     headers = {
-        'User-agent': 'WordsWithFriends3/10.26',
+        'user-agent': 'WordsWithFriends3/10.26',
         'zpid': zpid,
         'zdid': zdid,
         'wfpw': wfpw
     }
 
-    s.get(url + '/jumps/config', params=querystring)
-    r = s.post(url + '/sessions/create', json=data, headers=headers, params=querystring)
-    print(r.status_code)
-    print(r.text)
+    host = 'https://wordswithfriends.zyngawithfriends.com'
+    s.get(host + '/jumps/config', params=querystring)
 
+    url = '/sessions/create'
+    s.post(host + url, json=data, headers=headers, params=querystring)
+
+    return s
+
+
+# not necessary - endpoint only exists to track behavior
+# all user states remain active
+def logout(s):
+    # s.post('https://api.branch.io/v1/logout')
+    pass
+
+
+def get_games(s):
+    pass
+
+
+def get_letters(s, game):
+    pass
+
+
+def get_board_state(s, game):
+    pass
+
+
+def get_next_move(letters, state):
+    pass
+
+
+def make_move(s, move):
+    pass
+
+
+def main():
+    s = login()
+    games = get_games(s)
+    for game in games:
+        letters = get_letters(s, game)
+        state = get_board_state(s, game)
+        move = get_next_move(letters, state)
+        make_move(s, move)
+
+
+def get_daily_reward():
+    s = login()
+    host = 'https://wordswithfriends.zyngawithfriends.com'
+    url = '/packages/grant_daily_drip'
+    headers = {
+        '': ''
+    }
+    s.get(host + url, headers=headers)
+
+
+""" TODO
+1 get games
+2 get laetters
+3 get board state
+4 make valid move
+"""
 
 main()
