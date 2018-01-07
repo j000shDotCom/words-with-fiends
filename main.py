@@ -2,59 +2,30 @@
  Simple bot to log into and play WWF
 """
 from requests import Session
-from requests.auth import AuthBase
 
 
-# TODO do something with this
-class WWFAuth(AuthBase):
-    def __init__(self, login, password):
-        self.login = login
-        self.password = password
-
-    def __call__(self, r):
-
-        # do something with the request here
-        return r
-
-
-def login():
+def login(login, password):
     s = Session()
 
-    querystring = {
+    host = 'https://wordswithfriends.zyngawithfriends.com'
+
+    url = '/jumps/config'
+    query = {
         'bundle_name': 'WordsWithFriends3',
-        'device_model': 'iPhone',
-        'hash': hash_param,
-        'zpid': zpid,
         'client_version': '10.26'
     }
+    s.get(host + url, params=query)
+
+    url = '/sessions/create'
     data = {
         'login_request': {'login': login, 'password': password}
     }
-    headers = {
-        'user-agent': 'WordsWithFriends3/10.26',
-        'zpid': zpid,
-        'zdid': zdid,
-        'wfpw': wfpw
-    }
-
-    host = 'https://wordswithfriends.zyngawithfriends.com'
-    s.get(host + '/jumps/config', params=querystring)
-
-    url = '/sessions/create'
-    s.post(host + url, json=data, headers=headers, params=querystring)
-
+    s.post(host + url, json=data)
     return s
 
 
-# not necessary - endpoint only exists to track behavior
-# all user states remain active
-def logout(s):
-    # s.post('https://api.branch.io/v1/logout')
-    pass
-
-
 def get_games(s):
-    pass
+    return []
 
 
 def get_letters(s, game):
@@ -74,7 +45,7 @@ def make_move(s, move):
 
 
 def main():
-    s = login()
+    s = login(username, password)
     games = get_games(s)
     for game in games:
         letters = get_letters(s, game)
@@ -84,7 +55,8 @@ def main():
 
 
 def get_daily_reward():
-    s = login()
+    s = login(username, password)
+
     host = 'https://wordswithfriends.zyngawithfriends.com'
     url = '/packages/grant_daily_drip'
     headers = {
