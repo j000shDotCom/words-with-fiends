@@ -5,6 +5,33 @@ from requests import Session
 import json
 
 
+"""
+TODO
+make this actually behave like a client!
+
+get games
+for each game
+- get letters
+- get board state
+- make valid move
+get challenges
+for each challenge
+- get letters
+- get board state
+- make valid move
+
+# something like this
+s = login(username, password)
+data = get_user_data(s)
+games = get_games(s)
+for game in games:
+    letters = get_letters(s, game)
+    state = get_board_state(s, game)
+    move = get_next_move(letters, state)
+    make_move(s, move)
+"""
+
+
 HOST = 'https://wordswithfriends.zyngawithfriends.com'
 BUNDLE_NAME = 'WordsWithFriends3'
 CLIENT_VERSION = '10.26'
@@ -87,34 +114,6 @@ def get_chat_messages(s, user):
     pass
 
 
-def main():
-    s = login(username, password)
-    data = get_user_data(s)
-    games = get_games(s)
-    for game in games:
-        letters = get_letters(s, game)
-        state = get_board_state(s, game)
-        move = get_next_move(letters, state)
-        make_move(s, move)
-
-
-def get_daily_reward():
-    s = login(username, password)
+def get_daily_drip(s):
     url = '/packages/grant_daily_drip'
-    s.get(HOST + url)
-
-
-""" TODO
-- get games
-- for each game
-  - get letters
-  - get board state
-  - make valid move
-- get challenges
-- for each challenge
-  - get letters
-  - get board state
-  - make valid move
-"""
-
-main()
+    return s.get(HOST + url)
