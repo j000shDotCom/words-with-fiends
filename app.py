@@ -18,9 +18,8 @@ app = Flask(__name__)
 def home():
     return """
 <html>
-    <head>{title}</head>
-    <body>
-        <h1>{title}</h1>
+    <head><title{title}</title></head>
+    <body><h1>{title}</h1>
         <p>
             At some point I will make this browsable or playable.
             Until then, it'll just be a simple worker.
