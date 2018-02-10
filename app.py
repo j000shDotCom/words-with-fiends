@@ -37,11 +37,15 @@ def play():
 
 @app.cli.command()
 def work():
-    username = os.environ['WWF_USER']
-    password = os.environ['WWF_PASS']
-    s = WWF.login(username, password)
+    s = WWF.login(*get_credentials())
     r = WWF.get_daily_drip(s)
     print(r.json())
+
+
+def get_credentials():
+    username = os.environ.get('WWF_USER')
+    password = os.environ.get('WWF_PASS')
+    return (username, password)
 
 
 if __name__ == '__main__':
