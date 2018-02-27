@@ -104,28 +104,61 @@ def get_games(s):
     return d['games']
 
 
-def build_board(g):
-    moves = g['moves']
+def get_tiles_from_games(games):
+    tiles = {}
+    for g in gamea:
+        t = get_tiles_from_moves(g['moves'])
+        tiles.update(t)
+    return tiles
+
+
+def get_tiles_from_moves(moves):
+    if not moves:
+        return None
+
+    if is_free_play(moves):
+        TILES = FP_TILES
+        BLANKS = FP_NUM_BLANKS
+    else:
+        TILES = RP_TILES
+        BLANKS = RP_NUM_BLANKS
+
+    for m in moves:
+        if not is_play_move(m):
+            continue
+
+        word = m['words'][0].upper()
+        tiles = {}
+
+        # populate tiles
+        i = 0
+        for c in m['text'][:-1].split(','):
+            if not c.isdigit():
+                i += 1
+            elif int(c) >= BLANKS:
+                tiles[int(c)] = word[i]
+                i += 1
+            else:
+                tiles[int(c)] = '*'
+
+    return tiles
+
+
+def build_board_from_moves(moves):
     if not moves:
         return None
 
     if is_free_play(moves):
         SIZE = FP_BOARD_SIZE
-        TILES = FP_TILES
-        BLANKS = FP_NUM_BLANKS
     else:
         SIZE = RP_BOARD_SIZE
-        TILES = RP_TILES
-        BLANKS = RP_NUM_BLANKS
 
     board = [[' ' for _ in range(SIZE)] for _ in range(SIZE)]
 
     for m in moves:
-        print_move(m)
-        if not is_move_play(m):
+        if not is_play_move(m):
             continue
 
-        tiles = {}
         word = m['words'][0].upper()
         x = m['from_x']
         y = m['from_y']
@@ -140,32 +173,11 @@ def build_board(g):
             else:
                 y += 1
 
-        # build tiles
-        i = 0
-        for c in m['text'][:-1].split(','):
-            if not c.isdigit():
-                i += 1
-                continue
-            if int(c) >= BLANKS:
-                tiles[int(c)] = word[i]
-                i += 1
-            else:
-                tiles[int(c)] = '*'
-
-        # populate global tile map
-        for (i, c) in tiles.items():
-            TILES[i] = c
-
     return board
 
 
-def is_move_play(m):
+def is_play_move(m):
     return m['move_type'] == 'play' and m['text'] and m['words']
-
-
-def print_move(m):
-    pos = "{} -> {}".format((m['from_x'], m['from_y']), (m['to_x'], m['to_y']))
-    print(m['move_index'], m['move_type'], m['text'], m['words'], pos)
 
 
 def is_free_play(moves):

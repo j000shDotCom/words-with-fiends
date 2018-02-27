@@ -34,7 +34,7 @@ def play():
     s = WWF.login(*get_credentials())
     games = WWF.get_games(s)
     for g in games:
-        board = WWF.build_board(g)
+        board = WWF.build_board_from_moves(g['moves'])
         print(WWF.board_to_str(board))
         print()
 
