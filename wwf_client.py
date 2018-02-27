@@ -123,25 +123,41 @@ def get_tiles_from_moves(moves):
         TILES = RP_TILES
         BLANKS = RP_NUM_BLANKS
 
+    tiles = {}
     for m in moves:
         if not is_play_move(m):
             continue
 
         word = m['words'][0].upper()
-        tiles = {}
+        x = m['from_x']
+        y = m['from_y']
+
+        # TODO figure out how to handle this case (YOWIE -> 0,o,45,15,4,)
+        if len(word) != 1 + (m['to_y'] - y) + (m['to_x'] - x):
+            print(f'Word bounds do not match', word, m['text'])
+            continue
 
         # populate tiles
+        move_tiles = {}
         i = 0
         for c in m['text'][:-1].split(','):
             if not c.isdigit():
                 i += 1
             elif int(c) >= BLANKS:
-                tiles[int(c)] = word[i]
+                move_tiles[int(c)] = word[i]
                 i += 1
             else:
-                tiles[int(c)] = '*'
+                move_tiles[int(c)] = '*'
 
+        tiles.update(move_tiles)
+
+    populate_tiles(TILES, tiles)
     return tiles
+
+
+def populate_tiles(tile_list, tiles):
+    for (i, c) in tiles.items():
+        tile_list[i] = c
 
 
 def build_board_from_moves(moves):
@@ -164,7 +180,7 @@ def build_board_from_moves(moves):
         y = m['from_y']
         is_horizontal = m['from_y'] == m['to_y']
 
-        # TODO figure out how to handle this case
+        # TODO figure out how to handle this case (YOWIE -> 0,o,45,15,4,)
         if len(word) != 1 + (m['to_y'] - y) + (m['to_x'] - x):
             print(f'Word bounds do not match', word, m['text'])
             continue
