@@ -189,7 +189,6 @@ def is_free_play(moves):
 
 def board_to_str(board):
     b = '  ' + ' '.join(map(str, [i % 10 for i in range(len(board))]))
-    b += '\n'
     i = 0
     for row in board:
         b += '\n' + str(i % 10) + ' ' + '|'.join(row)

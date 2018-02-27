@@ -16,17 +16,14 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return """
-<html>
-    <head><title{title}</title></head>
-    <body><h1>{title}</h1>
-        <p>
-            At some point I will make this browsable or playable.
-            Until then, it'll just be a simple worker.
-        </p>
-    </body>
-</html>
-    """.format(title=TITLE)
+    disp = ""
+    s = WWF.login(*get_credentials())
+    games = WWF.get_games(s)
+    for g in games:
+        board = WWF.build_board_from_moves(g['moves'])
+        board_str = WWF.board_to_str(board)
+        disp += f'\n{board_str}\n'
+    return f'<!DOCTYPE html>\n<html><body><pre>\n{disp}\n</pre></body></html>'
 
 
 @app.cli.command()
