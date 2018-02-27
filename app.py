@@ -34,10 +34,7 @@ def play():
     s = WWF.login(*get_credentials())
     games = WWF.get_games(s)
     for g in games:
-        if not WWF.game_is_valid(g):
-            continue
         board = WWF.build_board(g)
-        print([u['name'] for u in g['users']])
         print(WWF.board_to_str(board))
         print()
 

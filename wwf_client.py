@@ -5,44 +5,33 @@ from requests import Session
 import json
 
 
-"""
-TODO
-make this actually behave like a client!
-
-get games
-for each game
-- get letters
-- get board state
-- make valid move
-get challenges
-for each challenge
-- get letters
-- get board state
-- make valid move
-
-# something like this
-s = login(username, password)
-data = get_user_data(s)
-games = get_games(s)
-for game in games:
-    letters = get_letters(s, game)
-    state = get_board_state(s, game)
-    move = get_next_move(letters, state)
-    make_move(s, move)
-"""
-
-
+# main constants
 HOST = 'https://wordswithfriends.zyngawithfriends.com'
 BUNDLE_NAME = 'WordsWithFriends3'
 CLIENT_VERSION = '10.26'
 
+# fast play
+FP_BOARD_SIZE = 11
+FP_TILE_COUNT = 52
+FP_TILES = [None for _ in range(FP_TILE_COUNT)]
+FP_MID = 5
+FP_NUM_BLANKS = 2
+
+# regular play
+RP_BOARD_SIZE = 15
+RP_TILE_COUNT = 104
+RP_TILES = [None for _ in range(RP_TILE_COUNT)]
+RP_MID = 6
+RP_NUM_BLANKS = 2
+
+# tiles
+VALID_CHARACTERS = [chr(c) for c in range(ord('A'), ord('Z') + 1)]
+WWF_TILE_IDS = {c: set() for c in VALID_CHARACTERS}
+
+# defined in config request
 MAX_ACTIVE = 0
 BLACKLIST = []
 WHITELIST = []
-
-WWF_TILE_IDS = {chr(n): set() for n in range(ord('A'), ord('Z') + 1)}
-WWF_TILES = [None for _ in range(105)]
-BOARD_SIZE = 15
 
 
 def _log_request_status(r, *args, **kwargs):
@@ -115,31 +104,48 @@ def get_games(s):
     return d['games']
 
 
+def somethint():
+    pass
+
+
 def build_board(g):
-    board = [[' ' for _ in range(BOARD_SIZE)] for _ in range(BOARD_SIZE)]
     moves = g['moves']
+    if not moves:
+        return None
+
+    if is_free_play(moves):
+        SIZE = FP_BOARD_SIZE
+        TILES = FP_TILES
+        BLANKS = FP_NUM_BLANKS
+    else:
+        SIZE = RP_BOARD_SIZE
+        TILES = RP_TILES
+        BLANKS = RP_NUM_BLANKS
+
+    board = [[' ' for _ in range(SIZE)] for _ in range(SIZE)]
+
     for m in moves:
-        if m['move_type'] != 'play' or not m['text'] or not m['words']:
+        print_move(m)
+        if not is_move_play(m):
             continue
 
+        tiles = {}
         word = m['words'][0].upper()
         x = m['from_x']
         y = m['from_y']
-        text = m['text'].split(',')[:-1]
-
         is_horizontal = m['from_y'] == m['to_y']
+
+        # add characters to board
         i = 0
-        for c in text:
+        for c in m['text'][:-1].split(','):
             # '76,47,5,18,67,1,e,48,' == GREASER
             # '42,8,*,31,' == MEAL
-
-            if not c.isdigit() and c is not '*':
+            if not c.isdigit() and c != '*':
+                board[y][x] = word[i]
                 continue
 
-            board[y][x] = word[i]
             if c != '*':
-                WWF_TILE_IDS[word[i]].add(int(c))
-                WWF_TILES[int(c)] = word[i]
+                board[y][x] = word[i]
 
             if is_horizontal:
                 x += 1
@@ -147,11 +153,49 @@ def build_board(g):
                 y += 1
 
             i += 1
+
+        # build tiles
+        i = 0
+        for c in m['text'][:-1].split(','):
+            if not c.isdigit():
+                i += 1
+                continue
+            if int(c) >= BLANKS:
+                tiles[int(c)] = word[i]
+                i += 1
+            else:
+                tiles[int(c)] = '*'
+
+        print(tiles)
+
+        for (i, c) in tiles.items():
+            if TILES[i] and TILES[i] != c:
+                print(f'{TILES[i]} DOES NOT EQUAL {c}')
+            TILES[i] = c
+
+    print(TILES)
     return board
 
 
+def is_move_play(m):
+    return m['move_type'] == 'play' and m['text'] and m['words']
+
+
+def print_move(m):
+    pos = "{} -> {}".format((m['from_x'], m['from_y']), (m['to_x'], m['to_y']))
+    print(m['move_index'], m['move_type'], m['text'], m['words'], pos)
+
+
+def is_free_play(moves):
+    m = moves[0] if type(moves) == list else moves
+    horizontal = m['from_y'] == FP_MID and m['to_y'] == FP_MID
+    vertical = m['from_x'] == FP_MID and m['to_x'] == FP_MID
+    return horizontal or vertical
+
+
 def board_to_str(board):
-    b = '  ' + '|'.join(map(str, [i % 10 for i in range(BOARD_SIZE)]))
+    b = '  ' + ' '.join(map(str, [i % 10 for i in range(len(board))]))
+    b += '\n'
     i = 0
     for row in board:
         b += '\n' + str(i % 10) + ' ' + '|'.join(row)
@@ -160,16 +204,7 @@ def board_to_str(board):
 
 
 def game_is_valid(game):
-    #for u in game['users']:
-    #    if type(u['id']) is list and 25505715 in u['id']:
-    #        return false
-    return True  #game['days_left'] > 0
-
-
-def get_tiles(s, game):
-    print(game['id'])
-    print([n['name'] for n in game['users']])
-    pass
+    return game['days_left'] > 0
 
 
 def get_next_move(letters, state):
@@ -177,11 +212,6 @@ def get_next_move(letters, state):
 
 
 def make_move(s, move):
-    url = '/moves'
-    params = {
-        'points': 69,
-        'words': ['BLAH', 'ALAMO']
-    }
     pass
 
 
