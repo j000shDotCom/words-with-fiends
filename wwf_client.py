@@ -104,10 +104,6 @@ def get_games(s):
     return d['games']
 
 
-def somethint():
-    pass
-
-
 def build_board(g):
     moves = g['moves']
     if not moves:
@@ -136,23 +132,13 @@ def build_board(g):
         is_horizontal = m['from_y'] == m['to_y']
 
         # add characters to board
-        i = 0
-        for c in m['text'][:-1].split(','):
-            # '76,47,5,18,67,1,e,48,' == GREASER
-            # '42,8,*,31,' == MEAL
-            if not c.isdigit() and c != '*':
-                board[y][x] = word[i]
-                continue
-
-            if c != '*':
-                board[y][x] = word[i]
+        for c in word:
+            board[y][x] = c
 
             if is_horizontal:
                 x += 1
             else:
                 y += 1
-
-            i += 1
 
         # build tiles
         i = 0
@@ -166,14 +152,10 @@ def build_board(g):
             else:
                 tiles[int(c)] = '*'
 
-        print(tiles)
-
+        # populate global tile map
         for (i, c) in tiles.items():
-            if TILES[i] and TILES[i] != c:
-                print(f'{TILES[i]} DOES NOT EQUAL {c}')
             TILES[i] = c
 
-    print(TILES)
     return board
 
 
