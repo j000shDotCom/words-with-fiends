@@ -106,7 +106,7 @@ def get_games(s):
 
 def get_tiles_from_games(games):
     tiles = {}
-    for g in gamea:
+    for g in games:
         t = get_tiles_from_moves(g['moves'])
         tiles.update(t)
     return tiles
@@ -163,6 +163,11 @@ def build_board_from_moves(moves):
         x = m['from_x']
         y = m['from_y']
         is_horizontal = m['from_y'] == m['to_y']
+
+        # TODO figure out how to handle this case
+        if len(word) != 1 + (m['to_y'] - y) + (m['to_x'] - x):
+            print(f'Word bounds do not match', word, m['text'])
+            continue
 
         # add characters to board
         for c in word:
