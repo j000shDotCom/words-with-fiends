@@ -29,10 +29,11 @@ def test():
     disp = ""
     s = WWF.login(*get_credentials())
     games = WWF.get_games(s)
+    link = '<a href="https://cs.rit.edu/~jal3040/files/fiends.html">more</a>'
     for g in games:
         (board, st) = WWF.get_nums(g['moves'])
         disp += f'\n{st}\n'
-    return f'<!DOCTYPE html>\n<html><body><pre>\n{disp}\n</pre></body></html>'
+    return f'<!DOCTYPE html>\n<html><body><pre>\n{disp}\n</pre>{link}</body></html>'
 
 @app.cli.command()
 def play():
