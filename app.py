@@ -16,31 +16,30 @@ http://flask.pocoo.org/docs/0.12/patterns/sqlalchemy/
 """
 
 
-TITLE = 'Words With Fire'
+TITLE = 'Words With Fiends'
 app = Flask(__name__)
 
 
 @app.route('/')
 def home():
+    return test()
+
+@app.route('/test')
+def test():
     disp = ""
     s = WWF.login(*get_credentials())
     games = WWF.get_games(s)
     for g in games:
-        board = WWF.build_board_from_moves(g['moves'])
-        board_str = WWF.board_to_str(board)
-        disp += f'\n{board_str}\n'
+        (board, st) = WWF.get_nums(g['moves'])
+        disp += f'\n{st}\n'
     return f'<!DOCTYPE html>\n<html><body><pre>\n{disp}\n</pre></body></html>'
-
 
 @app.cli.command()
 def play():
     s = WWF.login(*get_credentials())
     games = WWF.get_games(s)
     for g in games:
-        board = WWF.build_board_from_moves(g['moves'])
-        tiles = WWF.get_tiles_from_moves(g['moves'])
-        print(WWF.board_to_str(board))
-        print()
+        (board, st) = WWF.get_nums(g['moves'])
 
 
 @app.cli.command()
@@ -48,14 +47,6 @@ def work():
     s = WWF.login(*get_credentials())
     r = WWF.get_daily_drip(s)
     print(r.json())
-
-
-@app.cli.command()
-def history():
-    s = WWF.login(*get_credentials())
-    games = WWF.get_games(s)
-    for g in games:
-        board = WWF.show_game_history(g)
 
 
 def get_credentials():

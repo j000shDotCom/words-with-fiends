@@ -4,8 +4,17 @@
 from requests import Session
 import json
 
+# main constants
+HOST = 'https://wordswithfriends.zyngawithfriends.com'
+BUNDLE_NAME = 'WordsWithFriends3'
+CLIENT_VERSION = '10.26'
 
-"""
+# fast play
+FP_BOARD_SIZE = 11
+FP_TILE_COUNT = 52
+FP_TILES = [None for _ in range(FP_TILE_COUNT)]
+FP_MID = 5
+FP_NUM_BLANKS = 2
 FP_TILES_KNOWN = \
     '*' * 2 + \
     'E' * 7 + \
@@ -32,8 +41,15 @@ FP_TILES_KNOWN = \
     'J' * 1 + \
     'K' * 1 + \
     'Q' * 1 + \
-    'X' * 1
+    'X' * 1 + \
+    'Z' * 1
 
+# regular play
+RP_BOARD_SIZE = 15
+RP_TILE_COUNT = 104
+RP_TILES = [None for _ in range(RP_TILE_COUNT)]
+RP_MID = 6
+RP_NUM_BLANKS = 2
 RP_TILES_KNOWN = \
 	'*' * 2 + \
 	'E' * 13 + \
@@ -62,26 +78,26 @@ RP_TILES_KNOWN = \
 	'Q' * 1 + \
 	'X' * 1 + \
     'Z' * 1
-"""
 
-# main constants
-HOST = 'https://wordswithfriends.zyngawithfriends.com'
-BUNDLE_NAME = 'WordsWithFriends3'
-CLIENT_VERSION = '10.26'
-
-# fast play
-FP_BOARD_SIZE = 11
-FP_TILE_COUNT = 52
-FP_TILES = [None for _ in range(FP_TILE_COUNT)]
-FP_MID = 5
-FP_NUM_BLANKS = 2
-
-# regular play
-RP_BOARD_SIZE = 15
-RP_TILE_COUNT = 104
-RP_TILES = [None for _ in range(RP_TILE_COUNT)]
-RP_MID = 6
-RP_NUM_BLANKS = 2
+# define context based on size
+CONTEXT = {
+    FP_BOARD_SIZE:
+    {
+        'TILE_COUNT': FP_TILE_COUNT,
+        'TILES': FP_TILES,
+        'TILES_KNOWN': FP_TILES_KNOWN,
+        'MID': FP_MID,
+        'BLANKS': FP_NUM_BLANKS
+    },
+    RP_BOARD_SIZE:
+    {
+        'TILE_COUNT': RP_TILE_COUNT,
+        'TILES': RP_TILES,
+        'TILES_KNOWN': RP_TILES_KNOWN,
+        'MID': RP_MID,
+        'BLANKS': RP_NUM_BLANKS
+    }
+}
 
 # tiles
 VALID_CHARACTERS = [chr(c) for c in range(ord('A'), ord('Z') + 1)]
@@ -243,6 +259,78 @@ def build_board_from_moves(moves):
     return board
 
 
+def get_nums(moves):
+    if not moves:
+        return None
+
+    if is_free_play(moves):
+        SIZE = FP_BOARD_SIZE
+        TILES = FP_TILES_KNOWN
+    else:
+        SIZE = RP_BOARD_SIZE
+        TILES = RP_TILES_KNOWN
+
+    board = [[None for _ in range(SIZE)] for _ in range(SIZE)]
+
+    board_states = ""
+    for m in moves:
+        if not is_play_move(m):
+            continue
+
+        word = m['words'][0].upper()
+        x = m['from_x']
+        y = m['from_y']
+        is_horizontal = m['from_y'] == m['to_y']
+
+        # TODO figure out how to handle this case (YOWIE -> 0,o,45,15,4,)
+        if len(word) != 1 + (m['to_y'] - y) + (m['to_x'] - x):
+            print(f'Word bounds do not match', word, m['text'])
+            continue
+
+        for c in m['text'][:-1].split(','):
+            if c.isdigit():
+                board[y][x] = int(c)
+
+                if is_horizontal:
+                    x += 1
+                else:
+                    y += 1
+
+        checksum = compute_checksum(board)
+        diff = m['board_checksum'] - checksum
+        board_states += f"{SIZE} {word} {m['text']}\n"
+        board_states += f"{m['board_checksum']} {checksum} {diff}\n"
+        board_states += f"{bin(m['board_checksum'])}\n"
+        board_states += f"{bin(checksum)}\n"
+        board_states += f"{board_to_str(board)}\n\n"
+
+    return (board, board_states)
+
+
+def compute_checksum(board):
+    SIZE = len(board)
+    checksum = 0 if SIZE > 12 else (2 ** 25 - 1)
+    b = 0
+    for (y, row) in enumerate(board):
+        for (x, tile) in enumerate(row):
+            if tile == None:
+                checksum ^= 1
+            elif tile == 0 or tile == 1:
+                checksum ^= 2 ** ((15 * y + x) % 32)
+                b += 1
+            else:
+                checksum ^= tile
+                b += 1
+
+    if b % 2 == 1:
+        checksum = -checksum
+
+        if (checksum ^ 2) % 2 == 0:
+            checksum -= 2
+
+    return checksum
+
+
 def is_play_move(m):
     return m['move_type'] == 'play' and m['text'] and m['words']
 
@@ -260,9 +348,11 @@ def is_free_play(moves):
 
 
 def board_to_str(board):
+    LETS = RP_TILES_KNOWN if len(board) > 12 else FP_TILES_KNOWN
     b = '  ' + ' '.join(map(str, [i % 10 for i in range(len(board))]))
     i = 0
     for row in board:
+        row = map(lambda x: ' ' if x is None else LETS[x], row)
         b += '\n' + str(i % 10) + ' ' + '|'.join(row)
         i += 1
     return b
