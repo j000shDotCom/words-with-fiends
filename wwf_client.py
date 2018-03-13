@@ -5,6 +5,65 @@ from requests import Session
 import json
 
 
+"""
+FP_TILES_KNOWN = \
+    '*' * 2 + \
+    'E' * 7 + \
+    'A' * 5 + \
+    'I' * 4 + \
+    'O' * 4 + \
+    'N' * 2 + \
+    'R' * 2 + \
+    'T' * 2 + \
+    'D' * 2 + \
+    'L' * 2 + \
+    'S' * 4 + \
+    'U' * 1 + \
+    'G' * 1 + \
+    'B' * 1 + \
+    'C' * 1 + \
+    'F' * 1 + \
+    'H' * 1 + \
+    'M' * 1 + \
+    'P' * 1 + \
+    'V' * 1 + \
+    'W' * 1 + \
+    'Y' * 1 + \
+    'J' * 1 + \
+    'K' * 1 + \
+    'Q' * 1 + \
+    'X' * 1
+
+RP_TILES_KNOWN = \
+	'*' * 2 + \
+	'E' * 13 + \
+	'A' * 9 + \
+	'I' * 8 + \
+	'O' * 8 + \
+	'N' * 5 + \
+	'R' * 6 + \
+	'T' * 7 + \
+	'D' * 5 + \
+	'L' * 4 + \
+	'S' * 5 + \
+	'U' * 4 + \
+	'G' * 3 + \
+	'B' * 2 + \
+	'C' * 2 + \
+	'F' * 2 + \
+	'H' * 4 + \
+	'M' * 2 + \
+	'P' * 2 + \
+	'V' * 2 + \
+	'W' * 2 + \
+	'Y' * 2 + \
+	'J' * 1 + \
+	'K' * 1 + \
+	'Q' * 1 + \
+	'X' * 1 + \
+    'Z' * 1
+"""
+
 # main constants
 HOST = 'https://wordswithfriends.zyngawithfriends.com'
 BUNDLE_NAME = 'WordsWithFriends3'
@@ -104,14 +163,6 @@ def get_games(s):
     return d['games']
 
 
-def get_tiles_from_games(games):
-    tiles = {}
-    for g in games:
-        t = get_tiles_from_moves(g['moves'])
-        tiles.update(t)
-    return tiles
-
-
 def get_tiles_from_moves(moves):
     if not moves:
         return None
@@ -155,11 +206,6 @@ def get_tiles_from_moves(moves):
     return tiles
 
 
-def populate_tiles(tile_list, tiles):
-    for (i, c) in tiles.items():
-        tile_list[i] = c
-
-
 def build_board_from_moves(moves):
     if not moves:
         return None
@@ -199,6 +245,11 @@ def build_board_from_moves(moves):
 
 def is_play_move(m):
     return m['move_type'] == 'play' and m['text'] and m['words']
+
+
+def populate_tiles(tile_list, tiles):
+    for (i, c) in tiles.items():
+        tile_list[i] = c
 
 
 def is_free_play(moves):
