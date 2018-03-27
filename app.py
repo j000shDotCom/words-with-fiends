@@ -21,10 +21,9 @@ Djangoify!
 """
 
 TITLE = 'Words With Fiends'
-DATABASE_URL = os.environ['DATABASE_URL']
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -70,9 +69,13 @@ def play():
         (board, st) = WWF.get_nums(g['moves'])
 
 @app.cli.command()
-def store():
+def work():
     s = WWF.login(*get_credentials())
+    r = WWF.get_daily_drip(s)
+    print(r.json())
     games = WWF.get_games(s)
+
+    # store moves in db
     for g in games:
         moves = g['moves']
         for m in moves:
@@ -83,12 +86,6 @@ def store():
             except Exception as e:
                 print(e)
                 db.session.rollback()
-
-@app.cli.command()
-def work():
-    s = WWF.login(*get_credentials())
-    r = WWF.get_daily_drip(s)
-    print(r.json())
 
 def get_credentials():
     username = os.environ.get('WWF_USER')
