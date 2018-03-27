@@ -1,3 +1,5 @@
 Flask
 gunicorn
 requests
+flask_sqlalchemy
+psycopg2-binary
