@@ -84,7 +84,6 @@ def work():
                 db.session.add(move)
                 db.session.commit()
             except Exception as e:
-                print(e)
                 db.session.rollback()
 
 def get_credentials():
