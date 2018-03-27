@@ -16,12 +16,15 @@ https://pythonhosted.org/Flask-Classy/
 
 Flask Database connect to Postgres
 http://flask.pocoo.org/docs/0.12/patterns/sqlalchemy/
+
+Djangoify!
 """
 
-
 TITLE = 'Words With Fiends'
+DATABASE_URL = os.environ['DATABASE_URL']
+
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://localhost/wwfiends'
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -43,7 +46,6 @@ class Move(db.Model):
     promoted = db.Column(db.Integer)
     words = db.ARRAY(db.String(80))
     data = None
-
 
 @app.route('/')
 def home():
@@ -67,7 +69,6 @@ def play():
     for g in games:
         (board, st) = WWF.get_nums(g['moves'])
 
-
 @app.cli.command()
 def store():
     s = WWF.login(*get_credentials())
@@ -83,19 +84,16 @@ def store():
                 print(e)
                 db.session.rollback()
 
-
 @app.cli.command()
 def work():
     s = WWF.login(*get_credentials())
     r = WWF.get_daily_drip(s)
     print(r.json())
 
-
 def get_credentials():
     username = os.environ.get('WWF_USER')
     password = os.environ.get('WWF_PASS')
     return (username, password)
-
 
 if __name__ == '__main__':
     app.run(debug=True, use_reloader=True)
