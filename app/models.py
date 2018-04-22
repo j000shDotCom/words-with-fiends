@@ -38,6 +38,7 @@ class Game(db.Model):
     create_type = db.Column(db.String(80))
     days_left = db.Column(db.Integer)
     game_data = db.Column(db.JSON)
+    moves_count = db.Column(db.Integer)
 
 class User(db.Model):
     __tablename__ = 'users'
