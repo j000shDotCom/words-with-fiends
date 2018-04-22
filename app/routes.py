@@ -43,10 +43,6 @@ def store():
         moves = g['moves']
         del g['users']
         del g['moves']
-        if 'move_count' in g:
-            del g['move_count']
-        if 'moves_count' in g:
-            del g['moves_count']
         store_thing(Game, [g])
         for m in moves:
             m['word'] = m['words'][0] if m['words'] else ''
