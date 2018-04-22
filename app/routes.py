@@ -1,8 +1,8 @@
 import wwf_client as WWF
-from app import app, db
 import os
 import json
 import gzip
+from app import app, db
 from app.models import User, Word, Game, Move
 
 @app.route('/')
@@ -17,6 +17,7 @@ def show():
         disp += f'\n{st}\n'
     return f'<!DOCTYPE html>\n<html><body><pre>\n{disp}\n</pre>{link}</body></html>'
 
+
 @app.cli.command()
 def play():
     s = WWF.login(*get_credentials())
@@ -25,11 +26,13 @@ def play():
         (board, st) = WWF.get_nums(g['moves'])
         pass
 
+
 @app.cli.command()
 def work():
     s = WWF.login(*get_credentials())
     r = WWF.get_daily_drip(s)
     print(r.json())
+
 
 @app.cli.command()
 def store():
@@ -38,16 +41,9 @@ def store():
     for g in games:
         store_game(g)
 
-@app.cli.command()
-def words():
-    words = json.load(gzip.open('words.txt.gz', 'rb'))
-    store_words(words)
-
-
 def store_game(game):
     store_users(game['users'])
     #store_moves(game['moves'])
-
     try:
         db.session.commit()
     except Exception as e:
@@ -73,17 +69,26 @@ def store_moves(moves):
         except Exception:
             db.session.rollback()
 
-def store_words(words):
-    for w in words:
-        try:
-            word = Word(w)
-            db.session.add(word)
-        except Exception:
-            db.session.rollback()
+@app.cli.command()
+def words():
+    # json.dump([l.strip() for l in open('words.txt', 'r')], open('words.json', 'w'))
+    # import shutil
+    # with open('words.json', 'rt') as f_in:
+    #     with gzip.open('words.json.gz', 'wt') as f_out:
+    #         shutil.copyfileobj(f_in, f_out)
+    words = json.load(gzip.open('words.json.gz', 'rb'))
+    store_thing(Word, words)
+
+def store_thing(CL, objs):
     try:
+        for ob in objs:
+            e = CL(word=ob)
+            db.session.add(e)
         db.session.commit()
-    except Exception:
+    except Exception as e:
         db.session.rollback()
+        raise e
+
 
 def get_credentials(user_env = 'WWF_USER', pswd_env = 'WWF_PASS'):
     username = os.environ.get(user_env)
