@@ -39,35 +39,18 @@ def store():
     s = WWF.login(*get_credentials())
     games = WWF.get_games(s)
     for g in games:
-        store_game(g)
-
-def store_game(game):
-    store_users(game['users'])
-    #store_moves(game['moves'])
-    try:
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        print(e)
-
-def store_users(users):
-    for u in users:
-        user = User(**u)
-        try:
-            db.session.merge(user)
-        except Exception:
-            db.session.rollback()
-    
-    db.session.commit()
-
-def store_moves(moves):
-    for m in moves:
-        m['word'] = m['words'][0] if m['words'] else ''
-        move = Move(**m)
-        try:
-            db.session.add(move)
-        except Exception:
-            db.session.rollback()
+        store_thing(User, g['users'])
+        moves = g['moves']
+        del g['users']
+        del g['moves']
+        if 'move_count' in g:
+            del g['move_count']
+        if 'moves_count' in g:
+            del g['moves_count']
+        store_thing(Game, [g])
+        for m in moves:
+            m['word'] = m['words'][0] if m['words'] else ''
+        store_thing(Move, moves)
 
 @app.cli.command()
 def words():
@@ -76,21 +59,21 @@ def words():
     # with open('words.json', 'rt') as f_in:
     #     with gzip.open('words.json.gz', 'wt') as f_out:
     #         shutil.copyfileobj(f_in, f_out)
-    words = json.load(gzip.open('words.json.gz', 'rb'))
+    words = [{'word': w} for w in json.load(gzip.open('words.json.gz', 'rb'))]
     store_thing(Word, words)
 
 def store_thing(CL, objs):
     try:
         for ob in objs:
-            e = CL(word=ob)
-            db.session.add(e)
+            e = CL(**ob)
+            db.session.merge(e)
         db.session.commit()
     except Exception as e:
         db.session.rollback()
         raise e
 
 
-def get_credentials(user_env = 'WWF_USER', pswd_env = 'WWF_PASS'):
+def get_credentials(user_env='WWF_USER', pswd_env='WWF_PASS'):
     username = os.environ.get(user_env)
     password = os.environ.get(pswd_env)
     return (username, password)

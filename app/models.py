@@ -34,9 +34,10 @@ class Game(db.Model):
     is_fsn = db.Column(db.Boolean)
     is_matchmaking = db.Column(db.Boolean)
     was_matchmaking = db.Column(db.Boolean)
-    move_count = db.Column(db.Integer)
     random_seed = db.Column(db.BigInteger)
     create_type = db.Column(db.String(80))
+    days_left = db.Column(db.Integer)
+    game_data = db.Column(db.JSON)
 
 class User(db.Model):
     __tablename__ = 'users'
