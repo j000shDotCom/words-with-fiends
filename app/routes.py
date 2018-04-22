@@ -11,11 +11,19 @@ def show():
     disp = ""
     s = WWF.login(*get_credentials())
     games = WWF.get_games(s)
-    link = '<a href="https://cs.rit.edu/~jal3040/files/fiends.html">more</a>'
+    s = WWF.login(*get_credentials('MY_USER', 'MY_PASS'))
+    games += WWF.get_games(s)
+    html = '<!DOCTYPE html>\n<html>\n<head>\n<meta charset="utf-8"/>\n'
+    html += '\t<meta name="viewport" content="width=device-width, initial-scale=1"/>\n'
+    html += '</head>\n<body>\n<pre>\n'
+    disp = ''
     for g in games:
         (_, st) = WWF.get_nums(g['moves'])
-        disp += f'\n{st}\n'
-    return f'<!DOCTYPE html>\n<html><body><pre>\n{disp}\n</pre>{link}</body></html>'
+        disp += f"\n{[u['name'] for u in g['users']]}\n"
+        disp += f"\n{st}\n"
+    html += disp + '\n</pre>\n</body>\n</html>'
+    store_games(games)
+    return html
 
 
 @app.cli.command()
@@ -38,6 +46,9 @@ def work():
 def store():
     s = WWF.login(*get_credentials())
     games = WWF.get_games(s)
+    store_games(games)
+
+def store_games(games):
     for g in games:
         store_thing(User, g['users'])
         moves = g['moves']
