@@ -18,9 +18,13 @@ def show():
     html += '</head>\n<body>\n<pre>\n'
     disp = ''
     for g in games:
-        (_, st) = WWF.get_nums(g['moves'])
         disp += f"\n{[u['name'] for u in g['users']]}\n"
-        disp += f"\n{st}\n"
+        if 'moves' in g:
+            (_, st) = WWF.get_nums(g['moves'])
+            disp += f"\n{st}\n"
+        else:
+            disp += "\nWHY NO MOVES?!\n"
+            g['moves'] = []
     html += disp + '\n</pre>\n</body>\n</html>'
     store_games(games)
     return html
