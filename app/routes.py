@@ -1,64 +1,74 @@
-import wwf_client as WWF
 import os
 import json
 import gzip
 from app import app, db
 from app.models import User, Word, Game, Move
+from wwf_client.wwf import WWF
+from wwf_client.helpers import build_num_board_from_moves, build_text_board_from_moves, board_to_str
+
+@app.cli.command()
+def populate():
+    w = WWF(*get_credentials())
+    games = w.get_games()
 
 @app.route('/')
-@app.route('/index')
 def show():
-    disp = ""
-    s = WWF.login(*get_credentials())
-    games = WWF.get_games(s)
-    s = WWF.login(*get_credentials('MY_USER', 'MY_PASS'))
-    games += WWF.get_games(s)
-    html = '<!DOCTYPE html>\n<html>\n<head>\n<meta charset="utf-8"/>\n'
+    w = WWF(*get_credentials())
+    games = w.get_games()
+    s = w.login(*get_credentials('MY_USER', 'MY_PASS'))
+    games += w.get_games()
+
+    html = '<!DOCTYPE html>\n<html bgcolor="black">\n<head>\n<meta charset="utf-8"/>\n'
     html += '\t<meta name="viewport" content="width=device-width, initial-scale=1"/>\n'
-    html += '</head>\n<body>\n<pre>\n'
-    disp = ''
+    html += '</head>\n<body>\n<pre>'
+
     for g in games:
-        disp += f"\n{[u['name'] for u in g['users']]}\n"
-        if 'moves' in g:
-            (_, st) = WWF.get_nums(g['moves'])
-            disp += f"\n{st}\n"
-        else:
-            disp += "\nWHY NO MOVES?!\n"
-            g['moves'] = []
-    html += disp + '\n</pre>\n</body>\n</html>'
+        if 'moves' not in g:
+            continue
+
+        text_board = build_text_board_from_moves(g['moves'])
+        num_board = build_num_board_from_moves(g['moves'])
+
+        html += f"\n\n{[u['name'] for u in g['users']]}\n"
+        boards = (
+            [' '.join(l) for l in text_board],
+            [' '.join(['{:3d}'.format(x) if x else '   ' for x in l]) for l in num_board]
+        )
+        for row in zip(*boards):
+            html += f'\n\t{row[0]}\t\t{row[1]}'
+    
+    html += '\n</pre>\n</body>\n</html>\n'
+    
     store_games(games)
     return html
 
-
 @app.cli.command()
 def play():
-    s = WWF.login(*get_credentials())
-    games = WWF.get_games(s)
+    w = WWF(*get_credentials())
+    games = w.get_games()
     for g in games:
-        (board, st) = WWF.get_nums(g['moves'])
+        board = build_num_board_from_moves(g['moves'])
         pass
-
 
 @app.cli.command()
 def work():
-    s = WWF.login(*get_credentials())
-    r = WWF.get_daily_drip(s)
-    print(r.json())
-
+    w = WWF(*get_credentials())
+    w.get_daily_drip()
 
 @app.cli.command()
 def store():
-    s = WWF.login(*get_credentials())
-    games = WWF.get_games(s)
+    w = WWF(*get_credentials())
+    games = w.get_games()
     store_games(games)
 
 def store_games(games):
     for g in games:
+        users = g['users']
+        moves = g['moves'] if 'moves' in g else []
+
         store_thing(User, g['users'])
-        moves = g['moves']
-        del g['users']
-        del g['moves']
-        store_thing(Game, [g])
+        store_thing(Game, [{k:g[k] for k in g if k not in ['moves', 'users']}])
+
         for m in moves:
             m['word'] = m['words'][0] if m['words'] else ''
         store_thing(Move, moves)

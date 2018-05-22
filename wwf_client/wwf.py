@@ -1,0 +1,92 @@
+"""
+ Simple bot to log into and play WWF
+"""
+from requests import Session
+import json
+
+# main constants
+HOST = 'https://wordswithfriends.zyngawithfriends.com'
+BUNDLE_NAME = 'WordsWithFriends3'
+CLIENT_VERSION = '10.26'
+
+class WWF(object):
+    def get_initial_config(self):
+        url = '/jumps/config'
+        query = {
+            'bundle_name': BUNDLE_NAME,
+            'client_version': CLIENT_VERSION,
+            'plaintext': 1,
+        }
+        r = self.s.get(HOST + url, params=query)
+        return json.loads(r.text)
+
+    def login(self, login, password):
+        url = '/sessions/create'
+        data = {
+            'login_request': {'login': login, 'password': password}
+        }
+        self.s.post(HOST + url, json=data)
+
+    def __init__(self, login, password):
+        self.s = Session()
+        self.s.hooks['response'].append(_log_request_status)
+        self.s.headers.update({'Accept': 'application/json'})
+
+        conf = self.get_initial_config()
+        self.MAXACTIVE = int(conf['MaxActiveGamesForCreate'])
+        self.BLACKLIST = conf['BlackListedWords'].split(',')
+        self.WHITELIST = conf['WhiteListedWords'].split(',')
+
+        self.login(login, password)
+
+    def get_user_data(self):
+        url = '/user_data'
+        params = {
+            'badges': True,
+            'game_type': 'WordGame',
+            'include_item_data': True
+        }
+        r = self.s.get(HOST + url, params=params)
+        return json.loads(r.text)
+
+    def get_games(self):
+        url = '/games'
+        params = {
+            'game_type': 'WordGame',
+            'get_current_user': True,
+            'include_invitations': True,
+            'include_item_data': True,
+            'chat_messages_since': 0,
+            'moves_since': 0
+        }
+        r = self.s.get(HOST + url, params=params)
+        return json.loads(r.text)['games']
+
+    def get_next_legal_move(self, letters, state):
+        pass
+
+    def get_next_illegal_move(self, letters, state):
+        pass
+
+    def make_move(self, move):
+        pass
+
+    def get_chat_messages(self, user):
+        pass
+
+    def send_chat_message(self, user, mesg):
+        pass
+
+    def get_daily_drip(self):
+        url = '/packages/grant_daily_drip'
+        return self.s.get(HOST + url)
+
+def _log_request_status(r, *args, **kwargs):
+    parts = [r.status_code, r.request.method, r.request.url]
+    if r.request.body:
+        parts.append(r.request.body)
+    print(*parts)
+
+    if not r.ok:
+        parts.append(r.text)
+        raise ValueError('Request Failed: ', *parts)
