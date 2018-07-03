@@ -3,7 +3,7 @@ from app import db
 # TODO find some way to do this
 # from app.db import Model, Boolean, Column, BigInteger, Integer, String, ARRAY, Float, ForeignKey, DateTime
 
-class Move(db.Model):
+class MoveModel(db.Model):
     __tablename__ = 'moves'
     id = db.Column(db.BigInteger, primary_key=True)
     game_id = db.Column(db.BigInteger, db.ForeignKey('games.id'))
@@ -23,7 +23,7 @@ class Move(db.Model):
     words = db.Column(db.ARRAY(db.String(80)))
     data = None
 
-class Game(db.Model):
+class GameModel(db.Model):
     __tablename__ = 'games'
     id = db.Column(db.BigInteger, primary_key=True)
     client_version = db.Column(db.Float)
@@ -40,13 +40,13 @@ class Game(db.Model):
     game_data = db.Column(db.JSON)
     moves_count = db.Column(db.Integer)
 
-class User(db.Model):
+class UserModel(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.BigInteger, primary_key=True)
     name = db.Column(db.String(80))
     zynga_account_id = db.Column(db.BigInteger)
 
-class Word(db.Model):
+class WordModel(db.Model):
     __tablename__ = 'words'
     id = db.Column(db.Integer, primary_key=True)
     word = db.Column(db.String(80), nullable=False, unique=True)

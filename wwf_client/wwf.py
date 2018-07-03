@@ -3,6 +3,9 @@
 """
 from requests import Session
 import json
+from .user import User
+from .move import Move
+from .game import Game
 
 # main constants
 HOST = 'https://wordswithfriends.zyngawithfriends.com'
@@ -10,6 +13,33 @@ BUNDLE_NAME = 'WordsWithFriends3'
 CLIENT_VERSION = '10.26'
 
 class WWF(object):
+    def __init__(self, login, password):
+        self.s = Session()
+        self.s.hooks['response'].append(_log_request_status)
+        self.s.headers.update({'Accept': 'application/json'})
+
+        conf = self.get_initial_config()
+        self.MAXACTIVE = int(conf['MaxActiveGamesForCreate'])
+        self.BLACKLIST = conf['BlackListedWords'].split(',')
+        self.WHITELIST = conf['WhiteListedWords'].split(',')
+
+        self.user = User(self.login(login, password))
+        self.misc_user_data = self.get_user_data()
+
+    def get_games(self):
+        return [Game(g) for g in self.get_game_data()]
+
+    def can_make_move(self, game):
+        return game.can_make_move(self.user)
+
+    def store_games(self, games):
+        pass
+
+    def store_words(self, words):
+        pass
+
+    ### REQUESTS ###
+    
     def get_initial_config(self):
         url = '/jumps/config'
         query = {
@@ -25,19 +55,8 @@ class WWF(object):
         data = {
             'login_request': {'login': login, 'password': password}
         }
-        self.s.post(HOST + url, json=data)
-
-    def __init__(self, login, password):
-        self.s = Session()
-        self.s.hooks['response'].append(_log_request_status)
-        self.s.headers.update({'Accept': 'application/json'})
-
-        conf = self.get_initial_config()
-        self.MAXACTIVE = int(conf['MaxActiveGamesForCreate'])
-        self.BLACKLIST = conf['BlackListedWords'].split(',')
-        self.WHITELIST = conf['WhiteListedWords'].split(',')
-
-        self.login(login, password)
+        r = self.s.post(HOST + url, json=data)
+        return json.loads(r.text)
 
     def get_user_data(self):
         url = '/user_data'
@@ -49,7 +68,7 @@ class WWF(object):
         r = self.s.get(HOST + url, params=params)
         return json.loads(r.text)
 
-    def get_games(self):
+    def get_game_data(self):
         url = '/games'
         params = {
             'game_type': 'WordGame',
@@ -62,14 +81,17 @@ class WWF(object):
         r = self.s.get(HOST + url, params=params)
         return json.loads(r.text)['games']
 
-    def get_next_legal_move(self, letters, state):
-        pass
-
-    def get_next_illegal_move(self, letters, state):
-        pass
-
     def make_move(self, move):
-        pass
+        url = '/moves'
+        params = {
+            'points': move.points,
+            'words': move.words
+        }
+        data = {
+            'move': move
+        }
+        r = self.s.post(HOST + url, params=params, json=data)
+        return json.loads(r.text)
 
     def get_chat_messages(self, user):
         pass
@@ -80,6 +102,8 @@ class WWF(object):
     def get_daily_drip(self):
         url = '/packages/grant_daily_drip'
         return self.s.get(HOST + url)
+
+### HELPER METHODS ###
 
 def _log_request_status(r, *args, **kwargs):
     parts = [r.status_code, r.request.method, r.request.url]

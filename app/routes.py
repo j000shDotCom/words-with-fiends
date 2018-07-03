@@ -1,15 +1,8 @@
-import os
+from os import environ
 import json
 import gzip
 from app import app, db
-from app.models import User, Word, Game, Move
 from wwf_client.wwf import WWF
-from wwf_client.helpers import build_num_board_from_moves, build_text_board_from_moves, board_to_str
-
-@app.cli.command()
-def populate():
-    w = WWF(*get_credentials())
-    games = w.get_games()
 
 @app.route('/')
 def show():
@@ -26,8 +19,8 @@ def show():
         if 'moves' not in g:
             continue
 
-        text_board = build_text_board_from_moves(g['moves'])
-        num_board = build_num_board_from_moves(g['moves'])
+        text_board = []
+        num_board = []
 
         html += f"\n\n{[u['name'] for u in g['users']]}\n"
         boards = (
@@ -47,8 +40,9 @@ def play():
     w = WWF(*get_credentials())
     games = w.get_games()
     for g in games:
-        board = build_num_board_from_moves(g['moves'])
-        pass
+        if w.can_make_move(g):
+            m = g.get_next_illegal_move()
+            w.make_move(m)
 
 @app.cli.command()
 def work():
@@ -59,21 +53,23 @@ def work():
 def store():
     w = WWF(*get_credentials())
     games = w.get_games()
-    store_games(games)
+    w.store_games(games, db)
+    words()
 
+## TODO move this out
 def store_games(games):
     for g in games:
         users = g['users']
         moves = g['moves'] if 'moves' in g else []
 
-        store_thing(User, g['users'])
-        store_thing(Game, [{k:g[k] for k in g if k not in ['moves', 'users']}])
+        store_thing(UserModel, g['users'])
+        store_thing(GameModel, [{k:g[k] for k in g if k not in ['moves', 'users']}])
 
         for m in moves:
             m['word'] = m['words'][0] if m['words'] else ''
-        store_thing(Move, moves)
+        store_thing(MoveModel, moves)
 
-@app.cli.command()
+## TODO move this out
 def words():
     # json.dump([l.strip() for l in open('words.txt', 'r')], open('words.json', 'w'))
     # import shutil
@@ -81,7 +77,7 @@ def words():
     #     with gzip.open('words.json.gz', 'wt') as f_out:
     #         shutil.copyfileobj(f_in, f_out)
     words = [{'word': w} for w in json.load(gzip.open('words.json.gz', 'rb'))]
-    store_thing(Word, words)
+    store_thing(WordModel, words)
 
 def store_thing(CL, objs):
     try:
@@ -95,6 +91,6 @@ def store_thing(CL, objs):
 
 
 def get_credentials(user_env='WWF_USER', pswd_env='WWF_PASS'):
-    username = os.environ.get(user_env)
-    password = os.environ.get(pswd_env)
+    username = environ.get(user_env)
+    password = environ.get(pswd_env)
     return (username, password)
