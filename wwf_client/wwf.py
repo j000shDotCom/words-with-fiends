@@ -7,11 +7,6 @@ from .user import User
 from .move import Move
 from .game import Game
 
-# main constants
-HOST = 'https://wordswithfriends.zyngawithfriends.com'
-BUNDLE_NAME = 'WordsWithFriends3'
-CLIENT_VERSION = '10.26'
-
 class WWF(object):
     def __init__(self, login, password):
         self.s = Session()

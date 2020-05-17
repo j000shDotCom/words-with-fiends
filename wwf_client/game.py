@@ -16,30 +16,30 @@ CONTEXT = {
 
 class Game:
     def __init__(self, game_dict):
-        for k, v in game_dict.items():
+        for k,v in game_dict.items():
             setattr(self, k, v)
+
         self.moves = [Move(m) for m in self.moves]
         self.board = build_board_from_moves(self.moves)
-
-    def is_active(self):
-        return self.days_left > 0
+        self.tiles = get_remaining_tiles(self.board)
 
     def can_make_move(self, user):
-        return self.is_active() and self.current_move_user_id == user.id
+        return self.days_left > 0 and self.current_move_user_id == user.id
 
     def get_next_legal_move(self):
         pass
 
     def get_next_illegal_move(self):
-        print(self.board)
-        return NotImplemented
+        tiles = get_random_subset(self.tiles)
+        print(tiles)
+        pass
 
     def get_model(self):
         rem = ['moves', 'users']
         game_dict = {k:self.__dict__[k] for k in self.__dict__ if k not in rem}
         return GameModel(**game_dict)
 
-    def compute_checksum(board):
+    def compute_checksum(self, board):
         SIZE = len(board)
         checksum = 0 if SIZE > 12 else (2 ** 25 - 1)
         b = 0
@@ -74,17 +74,34 @@ def is_free_play(moves):
     vertical = m.from_x == mid and m.to_x == mid
     return horizontal or vertical
 
-def get_blank_board(moves, unused_tile_char = None):
-    if not moves:
-        return None
-    if is_free_play(moves):
-        SIZE = FP_BOARD_SIZE
-    else:
-        SIZE = RP_BOARD_SIZE
-    return [[unused_tile_char for _ in range(SIZE)] for _ in range(SIZE)]
+def get_random_subset(tile_map, num = 7):
+    remaining = list(itertools.chain.from_iterable(tiles.values()))
+    return random.sample(remaining, num)
+
+def get_remaining_tiles(board):
+    tiles = CONTEXT[len(board)]['tiles']
+
+    # pop off tiles used on the board
+    num_set = set(range(len(tiles)))
+    for row in board:
+        for t in row:
+            if t:
+                num_set.remove(t)
+
+    # build letter to ordinal map
+    tile_map = {}
+    for c in num_set:
+        letter = tiles[c]
+        if letter not in tile_map:
+            tile_map[letter] = [c]
+        else:
+            tile_map[letter].append(c)
+
+    return tile_map
 
 def build_board_from_moves(moves):
-    board = get_blank_board(moves)
+    size = FP_BOARD_SIZE if is_free_play(moves) else RP_BOARD_SIZE
+    board = [[None for _ in range(size)] for _ in range(size)]
 
     for m in moves:
         if not m.is_play_move():
@@ -100,7 +117,8 @@ def build_board_from_moves(moves):
             print(f'Word bounds do not match', word, m.text)
             continue
 
-        for c in m.text[:-1].split(','):
+        chars = m.text[:-1].split(',') # remove trailing comma
+        for c in chars:
             if c.isdigit():
                 board[y][x] = int(c)
                 if is_horizontal:
