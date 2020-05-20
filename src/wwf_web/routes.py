@@ -3,8 +3,24 @@ import json
 import gzip
 from app import app, db
 from wwf_client.wwf import WWF
+from flask import request, render_template
 
-@app.route('/')
+@app.route('/', methods = ['GET', 'POST'])
+def login():
+    if request.method == 'GET':
+        return render_template('login.html')
+    elif request.method == 'POST':
+        wwf = WWF(*request.values)
+        return request.values
+    else:
+        return "NO IDEA HOW I GOT HERE"
+
+
+@app.route('/money/<money>')
+def make_money_moves(money):
+    pass # kinda just keeping this here to remember positional arguments
+
+
 def show():
     w = WWF(*get_credentials())
     games = w.get_games()
@@ -19,6 +35,7 @@ def show():
         if 'moves' not in g:
             continue
 
+        render_template('partials/_board.html', g)
         text_board = []
         num_board = []
 
@@ -29,9 +46,9 @@ def show():
         )
         for row in zip(*boards):
             html += f'\n\t{row[0]}\t\t{row[1]}'
-    
+
     html += '\n</pre>\n</body>\n</html>\n'
-    
+
     store_games(games)
     return html
 
@@ -79,6 +96,7 @@ def words():
     words = [{'word': w} for w in json.load(gzip.open('words.json.gz', 'rb'))]
     store_thing(WordModel, words)
 
+
 def store_thing(CL, objs):
     try:
         for ob in objs:
@@ -90,7 +108,7 @@ def store_thing(CL, objs):
         raise e
 
 
-def get_credentials(user_env='WWF_USER', pswd_env='WWF_PASS'):
-    username = environ.get(user_env)
-    password = environ.get(pswd_env)
-    return (username, password)
+def get_credentials(user_env, pswd_env):
+    if not user_env or not pswd_env:
+        raise 'No environment variables provided'
+    return environ.get(user_env), environ.get(pswd_env)

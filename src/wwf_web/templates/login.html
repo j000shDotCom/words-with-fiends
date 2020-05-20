@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Log in{% endblock title %}
+
+{% block content %}
+<form method="POST">
+  <label>Email:
+    <input type="email" name="login" value="{{ request.form.username }}" />
+  </label>
+  <label>Password:
+    <input type="password" name="password" />
+  </label>
+  <input type="submit" value="Login" />
+</form>
+{% endblock content %}

@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"editor.rulers": [80,100],
+		"python.venvPath": "~/.virtualenvs",
+		"python.pythonPath": "/Users/josh/.virtualenvs/wwfiends/bin/python"
+	}
+}

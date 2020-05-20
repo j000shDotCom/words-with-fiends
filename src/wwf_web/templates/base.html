@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>You're here!</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  </head>
+  <body>
+    <section class="content">
+      <header>
+        <h1>{% block title %}{% endblock title %}</h1>
+        {% with messages = get_flashed_messages(with_categories=True) %}
+          {% if messages %}
+            <ul class="flash_messages">
+              {% for category, message in messages %}
+                <li class="{{ category }}">{{ message }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+      </header>
+      <main>{% block content %}{% endblock content %}</main>
+      <footer>{% block footer %}{% endblock footer %}</footer>
+    </section>
+  </body>
+</html>
