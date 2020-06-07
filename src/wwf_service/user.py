@@ -6,7 +6,7 @@ class User:
             setattr(self, k, v)
 
     def get_model(self):
-        return UserMode(self)
+        return UserModel(self)
 
     def __repr__(self):
         return str(self.__dict__)

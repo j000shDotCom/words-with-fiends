@@ -1,35 +1,63 @@
-from os import environ
 import json
 import gzip
-from app import app, db
-from wwf_client.wwf import WWF
-from flask import request, render_template
+from functools import wraps
+from flask import flash, request, render_template, session, redirect, url_for
 
-@app.route('/', methods = ['GET', 'POST'])
+from ..wwf_service import WwfService
+from . import app
+
+def login_required(function_to_protect):
+    @wraps(function_to_protect)
+    def wrapper(*args, **kwargs):
+        user_id = session.get('user_id')
+        if user_id:
+            user = database.get(user_id)
+            if user:
+                # Success!
+                return function_to_protect(*args, **kwargs)
+            else:
+                flash("Session exists, but user does not exist (anymore)")
+                return redirect(url_for('login'))
+        else:
+            flash("Please log in")
+            return redirect(url_for('login'))
+
+
+@app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'GET':
         return render_template('login.html')
     elif request.method == 'POST':
-        wwf = WWF(*request.values)
-        return request.values
+        return attempt_login(*request.values)
     else:
         return "NO IDEA HOW I GOT HERE"
 
 
+def attempt_login(email, password):
+    login_result = WwfService.login(email, password)
+    print(login_result)
+    if login_result:
+        flash("you've logged in!")
+        return redirect(url_for('home'))
+    else:
+        flash('login failed', category='error')
+        return redirect(url_for('login'))
+
+
+@app.route('/home', methods=['GET'])
+def home():
+    return render_template('home.html')
+
+@login_required
 @app.route('/money/<money>')
 def make_money_moves(money):
     pass # kinda just keeping this here to remember positional arguments
-
 
 def show():
     w = WWF(*get_credentials())
     games = w.get_games()
     s = w.login(*get_credentials('MY_USER', 'MY_PASS'))
     games += w.get_games()
-
-    html = '<!DOCTYPE html>\n<html bgcolor="black">\n<head>\n<meta charset="utf-8"/>\n'
-    html += '\t<meta name="viewport" content="width=device-width, initial-scale=1"/>\n'
-    html += '</head>\n<body>\n<pre>'
 
     for g in games:
         if 'moves' not in g:
@@ -46,8 +74,6 @@ def show():
         )
         for row in zip(*boards):
             html += f'\n\t{row[0]}\t\t{row[1]}'
-
-    html += '\n</pre>\n</body>\n</html>\n'
 
     store_games(games)
     return html

@@ -1,1 +1,1 @@
-from wwf_client.wwf import WWF
+from .wwf_service import WwfService

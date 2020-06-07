@@ -1,6 +1,4 @@
 from app.models import GameModel
-from .user import User
-from .move import Move
 
 FP_BOARD_SIZE = 11
 FP_TILES = '**EEEEEEEAAAAAIIIIOOOONNRRTTDDLLSSSSUGBCFHMPVWYJKQXZ'
