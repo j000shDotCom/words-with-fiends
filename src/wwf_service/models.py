@@ -1,5 +1,5 @@
 from datetime import datetime
-from app import db
+from extensions import db
 # TODO find some way to do this
 # from app.db import Model, Boolean, Column, BigInteger, Integer, String, ARRAY, Float, ForeignKey, DateTime
 
